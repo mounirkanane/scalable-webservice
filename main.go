@@ -1,8 +1,12 @@
 package main
 
-import "net/http"
-import "log"
-import "encoding/json"
+import  (
+	"net/http"
+	"log"
+	"encoding/json"
+	"time"
+	"strings"
+)
 
 type book struct {
 	ID     string  `json:"id"`
@@ -18,8 +22,18 @@ var books = []book{
 	{ID: "4", Title: "Dopamine Nation", Author: "Anne Lembke", Price: 20.00},
 }
 
+type BookDetailsResponse struct {
+    BookID   string                 `json:"book_id"`
+    Metadata map[string]interface{} `json:"metadata"`
+    Pricing  map[string]interface{} `json:"pricing"`
+    Inventory map[string]interface{} `json:"inventory"`
+    Reviews  map[string]interface{} `json:"reviews"`
+    Duration int64                  `json:"duration"`
+}
+
 func main() {
 	http.HandleFunc("/api/books", booksHandler)
+	http.HandleFunc("/api/books/", bookDetailHandler)
 	log.Println("Starting server on http://localhost:8080")
     err := http.ListenAndServe(":8080", nil)
     if err != nil {
@@ -43,8 +57,110 @@ func booksHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewEncoder(w).Encode(books)
 	if err != nil {
 		log.Printf("Error occured while encoding JSON: %v", err)
+		return
 	}
 
 	// Log successful operation
 	log.Printf("Successfully returned %d books to %s", len(books), r.RemoteAddr)
+}
+
+func bookDetailHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract URL from book path
+	pathParts := strings.Split(r.URL.Path, "/") // {"", "api", "books", "123", "details"}
+	// Verify URL format
+	if len(pathParts) < 5 || pathParts[4] != "details" {
+		http.Error(w, "Invalid URL Format. Expected /api/books/{id}/details", http.StatusBadRequest)
+		return
+	}
+
+	bookID := pathParts[3]
+	log.Printf("Processing book details request for ID: %s", bookID)
+
+	startTime := time.Now()
+
+	// Simulate fetching from metadata service
+    metadata := fetchBookMetadata(bookID)
+    
+    // Simulate fetching from pricing service
+    pricing := fetchBookPricing(bookID)
+    
+    // Simulate fetching from inventory service
+    inventory := fetchBookInventory(bookID)
+    
+    // Simulate fetching from reviews service
+    reviews := fetchBookReviews(bookID)
+
+	response := BookDetailsResponse {
+		BookID:   bookID,
+		Metadata: metadata,
+		Pricing:  pricing,
+		Inventory: inventory,
+		Reviews:  reviews,
+		Duration: time.Since(startTime).Milliseconds(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	// json.NewEncoder(w).Encode(response)
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ") // Use two spaces for indentation
+	encoder.Encode(response)
+
+	log.Printf("Sequential processing completed in %v", time.Since(startTime))
+} 
+
+// Simulate book metadata fetching
+func fetchBookMetadata(bookID string) map[string]interface{} {
+
+	time.Sleep(80 * time.Millisecond)
+
+	return map[string]interface{}{
+        "title":         "Sample Book Title",
+        "author":        "Sample Author",
+        "isbn":          "978-0123456789",
+        "publish_date":  "2023-01-15",
+        "description":   "A detailed description of the book",
+    }
+}
+
+// Simulate fetching price info
+func fetchBookPricing(bookID string) map[string]interface{} {
+	time.Sleep(120 * time.Millisecond)
+
+	return map[string]interface{}{
+        "price":         29.99,
+        "currency":      "USD",
+        "discount":      0.10,
+        "sale_price":    26.99,
+        "promotion":     "Limited time offer",
+    }
+}
+
+// Simulate fetching inventory status
+func fetchBookInventory(bookID string) map[string]interface{} {
+	time.Sleep(150 * time.Millisecond)
+
+	return map[string]interface{}{
+        "in_stock":      true,
+        "quantity":      42,
+        "warehouse":     "East Coast Distribution",
+        "shipping_time": "2-3 business days",
+    }
+}
+
+// Simulate fetching customer reviews
+func fetchBookReviews(bookID string) map[string]interface{} {
+	time.Sleep(100 * time.Millisecond)
+
+	return map[string]interface{}{
+        "average_rating": 4.3,
+        "total_reviews":  127,
+        "recent_review":  "Great book, highly recommended!",
+        "rating_breakdown": map[string]int{
+            "5_star": 65,
+            "4_star": 32,
+            "3_star": 20,
+            "2_star": 7,
+            "1_star": 3,
+        },
+	}
 }
