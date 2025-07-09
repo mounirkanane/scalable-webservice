@@ -65,7 +65,6 @@ func booksHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func bookDetailHandler(w http.ResponseWriter, r *http.Request) {
-	// Extract URL from book path
 	pathParts := strings.Split(r.URL.Path, "/") // {"", "api", "books", "123", "details"}
 	// Verify URL format
 	if len(pathParts) < 5 || pathParts[4] != "details" {
@@ -76,6 +75,73 @@ func bookDetailHandler(w http.ResponseWriter, r *http.Request) {
 	bookID := pathParts[3]
 	log.Printf("Processing book details request for ID: %s", bookID)
 
+	mode := r.URL.Query().Get("mode")
+	if mode == "" {
+		mode = "sequential"
+	}
+
+	log.Printf("Processing book details request for ID: %s using %s mode", bookID, mode)
+
+	switch mode {
+		case "sequential":
+			handleSequentialBookDetails(w, r, bookID)
+		case "concurrent": 
+			handleConcurrentBookDetails(w, r, bookID)
+		default:
+			http.Error(w, "Invalid mode. Use 'sequential' or 'concurrent'", http.StatusBadRequest)
+	}
+}
+
+func handleConcurrentBookDetails(w http.ResponseWriter, r *http.Request, bookID string) {
+	startTime := time.Now()
+
+	// Create channels to receive results from each service call
+	metadataChannel := make(chan map[string]interface{})
+	pricingChannel := make(chan map[string]interface{})
+	inventoryChannel := make(chan map[string]interface{})
+	reviewsChannel := make(chan map[string]interface{})
+
+	// Launch goroutine for each channel
+	go func() {
+		result := fetchBookMetadata(bookID)
+		metadataChannel <- result
+	}() // calls the anon function
+
+	go func() {
+		result := fetchBookPricing(bookID)
+		pricingChannel <- result
+	}()
+
+	go func() {
+		result := fetchBookInventory(bookID)
+		inventoryChannel <- result
+	}()
+
+	go func() {
+		result := fetchBookReviews(bookID)
+		reviewsChannel <- result
+	}()
+
+	response := BookDetailsResponse {
+		BookID: bookID,
+		Metadata: <-metadataChannel,
+		Pricing: <-pricingChannel,
+		Inventory: <-inventoryChannel,
+		Reviews: <-reviewsChannel,
+		Duration: time.Since(startTime).Milliseconds(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ")
+	encoder.Encode(response)
+
+	log.Printf("Concurrent processing completed in %v", time.Since(startTime))
+}
+
+
+
+func handleSequentialBookDetails(w http.ResponseWriter, r *http.Request, bookID string) {
 	startTime := time.Now()
 
 	// Simulate fetching from metadata service
