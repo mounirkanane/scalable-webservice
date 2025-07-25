@@ -198,10 +198,10 @@ func populateInitialData() error {
 	
 	// Insert reviews data
 	reviews := []map[string]interface{}{
-		{"id": "1", "average_rating": 4.5, "total_reviews": 89, "recent_review": "Essential reading for Go developers", "five_star": 45, "four_star": 28, "three_star": 12, "two_star": 3, "one_star": 1},
-		{"id": "2", "average_rating": 4.3, "total_reviews": 127, "recent_review": "Changed how I think about writing code", "five_star": 65, "four_star": 32, "three_star": 20, "two_star": 7, "one_star": 3},
-		{"id": "3", "average_rating": 4.7, "total_reviews": 56, "recent_review": "Incredibly helpful for interview prep", "five_star": 38, "four_star": 14, "three_star": 3, "two_star": 1, "one_star": 0},
-		{"id": "4", "average_rating": 4.1, "total_reviews": 94, "recent_review": "Eye-opening perspective on modern life", "five_star": 42, "four_star": 31, "three_star": 15, "two_star": 4, "one_star": 2},
+		{"book_id": "1", "average_rating": 4.5, "total_reviews": 89, "recent_review": "Essential reading for Go developers", "five_star": 45, "four_star": 28, "three_star": 12, "two_star": 3, "one_star": 1},
+		{"book_id": "2", "average_rating": 4.3, "total_reviews": 127, "recent_review": "Changed how I think about writing code", "five_star": 65, "four_star": 32, "three_star": 20, "two_star": 7, "one_star": 3},
+		{"book_id": "3", "average_rating": 4.7, "total_reviews": 56, "recent_review": "Incredibly helpful for interview prep", "five_star": 38, "four_star": 14, "three_star": 3, "two_star": 1, "one_star": 0},
+		{"book_id": "4", "average_rating": 4.1, "total_reviews": 94, "recent_review": "Eye-opening perspective on modern life", "five_star": 42, "four_star": 31, "three_star": 15, "two_star": 4, "one_star": 2},
 	}
 	
 	for _, rev := range reviews {
