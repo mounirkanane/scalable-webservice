@@ -27,8 +27,16 @@ func main() {
 	log.Println("Starting server on http://localhost:8080")
 	log.Println("Available endpoints:")
 	log.Println("  GET /api/books - List all books")
-	log.Println("  GET /api/books/{id}/details?mode=sequential - Sequential book details")
-	log.Println("  GET /api/books/{id}/details?mode=concurrent - Concurrent book details")
+	log.Println("  GET /api/books/{id}/details?mode=sequential - Sequential operations")
+	log.Println("  GET /api/books/{id}/details?mode=concurrent - Concurrent operations")
+	log.Println("  Optional: &user_id=demo_user for personalized recommendations")
+	log.Println("")
+	log.Println("Operations include:")
+	log.Println("  • Database queries for metadata, pricing, inventory, reviews")
+	log.Println("  • External API call to api.quotable.io for recommendations")
+	log.Println("")
+	log.Println("This demonstrates the difference between sequential and concurrent coordination")
+	log.Println("when mixing fast database operations with slower external API calls.")
 
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

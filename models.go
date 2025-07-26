@@ -10,12 +10,13 @@ type Book struct {
 
 // BookDetailsResponse represents the comprehensive book details response
 type BookDetailsResponse struct {
-	BookID    string                 `json:"book_id"`
-	Metadata  map[string]interface{} `json:"metadata"`
-	Pricing   map[string]interface{} `json:"pricing"`
-	Inventory map[string]interface{} `json:"inventory"`
-	Reviews   map[string]interface{} `json:"reviews"`
-	Duration  int64                  `json:"duration"`
+	BookID          string                 `json:"book_id"`
+	Metadata        map[string]interface{} `json:"metadata"`
+	Pricing         map[string]interface{} `json:"pricing"`
+	Inventory       map[string]interface{} `json:"inventory"`
+	Reviews         map[string]interface{} `json:"reviews"`
+	Recommendations map[string]interface{} `json:"recommendations"`
+	Duration        int64                  `json:"duration"`
 }
 
 // In-memory books data for the simple books list endpoint

@@ -65,24 +65,32 @@ func BookDetailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleSequentialBookDetails processes database queries one after another
+// handleSequentialBookDetails processes database queries and external API calls one after another
 func handleSequentialBookDetails(w http.ResponseWriter, r *http.Request, bookID string) {
 	startTime := time.Now()
 
-	// Sequential approach: call each database query one at a time
+	// Get user ID for personalized recommendations (default to demo user)
+	userID := r.URL.Query().Get("user_id")
+	if userID == "" {
+		userID = "demo_user"
+	}
+
+	// Sequential approach: call each operation one at a time
 	metadata := FetchBookMetadata(bookID)
 	pricing := FetchBookPricing(bookID)
 	inventory := FetchBookInventory(bookID)
 	reviews := FetchBookReviews(bookID)
+	recommendations := FetchPersonalizedRecommendations(bookID, userID) // This one calls external API!
 
 	// Build comprehensive response
 	response := BookDetailsResponse{
-		BookID:    bookID,
-		Metadata:  metadata,
-		Pricing:   pricing,
-		Inventory: inventory,
-		Reviews:   reviews,
-		Duration:  time.Since(startTime).Milliseconds(),
+		BookID:          bookID,
+		Metadata:        metadata,
+		Pricing:         pricing,
+		Inventory:       inventory,
+		Reviews:         reviews,
+		Recommendations: recommendations,
+		Duration:        time.Since(startTime).Milliseconds(),
 	}
 
 	// Send JSON response with pretty printing
@@ -94,17 +102,24 @@ func handleSequentialBookDetails(w http.ResponseWriter, r *http.Request, bookID 
 	log.Printf("Sequential processing completed in %v", time.Since(startTime))
 }
 
-// handleConcurrentBookDetails processes database queries concurrently using goroutines
+// handleConcurrentBookDetails processes database queries and external API calls concurrently using goroutines
 func handleConcurrentBookDetails(w http.ResponseWriter, r *http.Request, bookID string) {
 	startTime := time.Now()
 
-	// Create channels to receive results from each concurrent database query
+	// Get user ID for personalized recommendations (default to demo user)
+	userID := r.URL.Query().Get("user_id")
+	if userID == "" {
+		userID = "demo_user"
+	}
+
+	// Create channels to receive results from each operation
 	metadataChannel := make(chan map[string]interface{})
 	pricingChannel := make(chan map[string]interface{})
 	inventoryChannel := make(chan map[string]interface{})
 	reviewsChannel := make(chan map[string]interface{})
+	recommendationsChannel := make(chan map[string]interface{})
 
-	// Launch concurrent goroutines for each database query
+	// Launch concurrent goroutines for each operation
 	go func() {
 		result := FetchBookMetadata(bookID)
 		metadataChannel <- result
@@ -125,15 +140,21 @@ func handleConcurrentBookDetails(w http.ResponseWriter, r *http.Request, bookID 
 		reviewsChannel <- result
 	}()
 
+	go func() {
+		result := FetchPersonalizedRecommendations(bookID, userID) // This one calls external API!
+		recommendationsChannel <- result
+	}()
+
 	// Collect results from all channels (fan-in coordination)
 	// This blocks until all goroutines complete and send their results
 	response := BookDetailsResponse{
-		BookID:    bookID,
-		Metadata:  <-metadataChannel,
-		Pricing:   <-pricingChannel,
-		Inventory: <-inventoryChannel,
-		Reviews:   <-reviewsChannel,
-		Duration:  time.Since(startTime).Milliseconds(),
+		BookID:          bookID,
+		Metadata:        <-metadataChannel,
+		Pricing:         <-pricingChannel,
+		Inventory:       <-inventoryChannel,
+		Reviews:         <-reviewsChannel,
+		Recommendations: <-recommendationsChannel,
+		Duration:        time.Since(startTime).Milliseconds(),
 	}
 
 	// Send JSON response with pretty printing
